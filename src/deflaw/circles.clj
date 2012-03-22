@@ -7,10 +7,13 @@
 
 (defonce world (atom {}))
 
+(defn pick [coll]
+  (first (shuffle coll)))
+
 (defn init-pop [width height]
   (apply merge
          (repeatedly (rand 10)
-                     #(let [type :circle]
+                     #(let [type (pick [::loner ::seeker])]
                         {(gensym (name type))
                          {:type   type
                           :x      (rand width)
@@ -29,7 +32,7 @@
 
 (defmulti draw-entity (fn [g ent] (:type ent)))
 
-(defmethod draw-entity :circle [g ent]
+(defmethod draw-entity ::circle [g ent]
   (draw g (circle (:x ent) (:y ent) (:r ent))
           (style :foreground (:color ent)
                  :background nil
@@ -38,8 +41,25 @@
 (defmulti self-esteem (fn [state id]
                         (get-in state [:entities id :type])))
 
-(defmethod self-esteem :circle [state id]
+(defmethod self-esteem ::circle [state id]
   (rand))
+
+(defn distances [ents id]
+  (letfn [(distance-from [other-id]
+            (let [x1 (get-in ents [id       :x])
+                  x2 (get-in ents [other-id :x])
+                  y1 (get-in ents [id       :y])
+                  y2 (get-in ents [other-id :y])]
+              (apply + (map #(* % %) [(- x2 x1) (- y2 y1)]))))]
+    (map distance-from (keys (dissoc ents id)))))
+
+(derive ::loner ::circle)
+(defmethod self-esteem ::loner [state id]
+  (apply min (distances (:entities state) id)))
+
+(derive ::seeker ::circle)
+(defmethod self-esteem ::seeker [state id]
+  (- (apply min (distances (:entities state) id))))
 
 (defn in-boundso [state id]
   (fresh [x y w h]
