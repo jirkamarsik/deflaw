@@ -24,6 +24,7 @@
 
 (show! my-frame)
 (canvas-resized my-canvas)
+(reset-world!)
 
 (defonce my-timer (timer (fn [time]
                            (update-world)

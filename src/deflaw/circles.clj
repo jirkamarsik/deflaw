@@ -1,16 +1,31 @@
 (ns deflaw.circles
   (:refer-clojure :exclude [==])
-  (:use seesaw.graphics
+  (:use (seesaw graphics color)
         clojure.core.logic
         deflaw.aux-rels)
   (:require [clojure.core.logic.arithmetic :as la]))
 
-(defonce world (atom {:entities {0 {:type   :circle
-                                    :x      200
-                                    :y      200
-                                    :r      25
-                                    :color  :red
-                                    :stroke 3}}}))
+(defonce world (atom {}))
+
+(defn init-pop [width height]
+  (apply merge
+         (repeatedly (rand 10)
+                     #(let [type :circle]
+                        {(gensym (name type))
+                         {:type   type
+                          :x      (rand width)
+                          :y      (rand height)
+                          :r      (+ 10 (rand 40))
+                          :color  (color (int (+ 56 (rand 200)))
+                                         (int (+ 56 (rand 200)))
+                                         (int (+ 56 (rand 200))))
+                          :stroke (+ 2 (rand 4))}}))))
+
+(defn reset-world! []
+  (swap! world (fn [{:keys [width height]}]
+                 {:width    width
+                  :height   height
+                  :entities (init-pop width height)})))
 
 (defmulti draw-entity (fn [g ent] (:type ent)))
 
